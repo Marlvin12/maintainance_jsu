@@ -11,6 +11,7 @@ import NewRequest from "./pages/NewRequest";
 import RequestsList from "./pages/RequestsList";
 import ChatPage from "./pages/ChatPage";
 import AdminPanel from "./pages/AdminPanel";
+import MaintenanceView from "./pages/MaintenanceView";
 import ProfileSettings from "./pages/ProfileSettings";
 import DashboardLayout from "./components/DashboardLayout";
 import NotFound from "./pages/NotFound";
@@ -24,6 +25,30 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <DashboardLayout>{children}</DashboardLayout>;
 };
 
+// Maintenance workers get auto-redirected to their view when hitting /dashboard
+const DashboardWithRoleRedirect = () => {
+  const { isMaintenance, loading } = useAuth();
+  if (loading) return null;
+  if (isMaintenance) return <Navigate to="/dashboard/maintenance" replace />;
+  return <Dashboard />;
+};
+
+// Guards a route so only admins can access it
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return null;
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
+// Guards a route so only maintenance workers (or admins) can access it
+const MaintenanceRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isMaintenance, isAdmin, loading } = useAuth();
+  if (loading) return null;
+  if (!isMaintenance && !isAdmin) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -34,11 +59,22 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/auth" replace />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute><DashboardWithRoleRedirect /></ProtectedRoute>
+            } />
             <Route path="/dashboard/new" element={<ProtectedRoute><NewRequest /></ProtectedRoute>} />
             <Route path="/dashboard/requests" element={<ProtectedRoute><RequestsList /></ProtectedRoute>} />
             <Route path="/dashboard/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-            <Route path="/dashboard/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+            <Route path="/dashboard/admin" element={
+              <ProtectedRoute>
+                <AdminRoute><AdminPanel /></AdminRoute>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/maintenance" element={
+              <ProtectedRoute>
+                <MaintenanceRoute><MaintenanceView /></MaintenanceRoute>
+              </ProtectedRoute>
+            } />
             <Route path="/dashboard/profile" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

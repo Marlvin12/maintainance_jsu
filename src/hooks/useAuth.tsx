@@ -7,6 +7,7 @@ type AuthContextType = {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  isMaintenance: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  isMaintenance: false,
   signOut: async () => {},
 });
 
@@ -23,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -42,11 +45,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user) {
-      supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => {
-        setIsAdmin(!!data);
-      });
+      // Query user_roles table directly — works with RLS "Users can view own roles"
+      supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .then(({ data }) => {
+          const roles = (data ?? []).map((r) => r.role as string);
+          setIsAdmin(roles.includes('admin'));
+          setIsMaintenance(roles.includes('maintenance'));
+        });
     } else {
       setIsAdmin(false);
+      setIsMaintenance(false);
     }
   }, [user]);
 
@@ -55,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isMaintenance, signOut }}>
       {children}
     </AuthContext.Provider>
   );

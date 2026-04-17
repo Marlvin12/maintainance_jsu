@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Wrench, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -15,7 +14,6 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'user' | 'admin'>('user');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -25,23 +23,42 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/dashboard');
+        // Route maintenance workers to their view, everyone else to dashboard
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+        const roles = (roleData ?? []).map((r) => r.role as string);
+        if (roles.includes('maintenance')) {
+          navigate('/dashboard/maintenance');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
+        // All new signups are registered as students (user role)
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName, role },
-            emailRedirectTo: window.location.origin,
+            data: { full_name: fullName, role: 'user' },
+            emailRedirectTo: `${window.location.origin}/dashboard`,
           },
         });
         if (error) throw error;
-        toast.success('Account created! Check your email to confirm.');
+        toast.success('Account created! Check your email to confirm your address, then sign in.');
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg === 'Failed to fetch' || msg.includes('fetch')) {
+        toast.error(
+          'Unable to reach the server. If this is a Supabase free-tier project, it may be paused — visit your Supabase dashboard to wake it up.',
+          { duration: 8000 }
+        );
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -71,51 +88,64 @@ const Auth = () => {
               {isLogin ? 'Welcome back' : 'Create account'}
             </CardTitle>
             <CardDescription>
-              {isLogin ? 'Sign in to your account' : 'Get started with FixIt Sonny'}
+              {isLogin ? 'Sign in to your account' : 'Register as a student to submit maintenance requests'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" required={!isLogin} />
-                  </div>
-                  <div className="space-y-3">
-                    <Label>Account Type</Label>
-                    <RadioGroup value={role} onValueChange={(v) => setRole(v as 'user' | 'admin')} className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="user" id="role-student" />
-                        <Label htmlFor="role-student" className="cursor-pointer font-normal">Student</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="admin" id="role-admin" />
-                        <Label htmlFor="role-admin" className="cursor-pointer font-normal">Admin</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    required={!isLogin}
+                  />
+                </div>
               )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                />
               </div>
-              <Button type="submit" className="w-full gradient-accent font-semibold text-primary-foreground" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full gradient-accent font-semibold text-primary-foreground"
+                disabled={loading}
+              >
                 {loading ? 'Loading...' : (
                   <span className="flex items-center gap-2">
-                    {isLogin ? 'Sign In' : 'Create Account'}
+                    {isLogin ? 'Sign In' : 'Create Student Account'}
                     <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
               </Button>
             </form>
             <div className="mt-4 text-center">
-              <button onClick={() => setIsLogin(!isLogin)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
               </button>
             </div>

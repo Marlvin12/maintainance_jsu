@@ -1,12 +1,16 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, List, MessageCircle, LogOut, Wrench, Shield, Settings } from 'lucide-react';
+import {
+  LayoutDashboard, PlusCircle, List, MessageCircle, LogOut,
+  Wrench, Shield, Settings, HardHat,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/NotificationBell';
 
-const navItems = [
+const studentNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: PlusCircle, label: 'New Request', path: '/dashboard/new' },
   { icon: List, label: 'My Requests', path: '/dashboard/requests' },
@@ -14,10 +18,20 @@ const navItems = [
   { icon: Settings, label: 'Profile', path: '/dashboard/profile' },
 ];
 
+const maintenanceNavItems = [
+  { icon: HardHat, label: 'Maintenance Board', path: '/dashboard/maintenance' },
+  { icon: Settings, label: 'Profile', path: '/dashboard/profile' },
+];
+
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, isMaintenance } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const navItems = isMaintenance ? maintenanceNavItems : studentNavItems;
+
+  const roleLabel = isAdmin ? 'Admin' : isMaintenance ? 'Maintenance' : 'Student Portal';
+  const roleBadgeVariant = isAdmin ? 'destructive' : isMaintenance ? 'secondary' : 'outline';
 
   return (
     <div className="min-h-screen flex">
@@ -29,9 +43,9 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             </div>
             <div>
               <h1 className="font-heading font-bold text-lg text-sidebar-accent-foreground">FixIt Sonny</h1>
-              <p className="text-xs text-sidebar-foreground/60">
-                {isAdmin ? 'Admin Panel' : 'Student Portal'}
-              </p>
+              <Badge variant={roleBadgeVariant} className="text-xs mt-0.5">
+                {roleLabel}
+              </Badge>
             </div>
           </div>
         </div>
@@ -55,19 +69,35 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
               </button>
             );
           })}
+
+          {/* Admin-only routes */}
           {isAdmin && (
-            <button
-              onClick={() => navigate('/dashboard/admin')}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                location.pathname === '/dashboard/admin'
-                  ? 'bg-sidebar-accent text-sidebar-primary'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-              )}
-            >
-              <Shield className="w-5 h-5" />
-              Admin
-            </button>
+            <>
+              <button
+                onClick={() => navigate('/dashboard/maintenance')}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  location.pathname === '/dashboard/maintenance'
+                    ? 'bg-sidebar-accent text-sidebar-primary'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                )}
+              >
+                <HardHat className="w-5 h-5" />
+                Maintenance View
+              </button>
+              <button
+                onClick={() => navigate('/dashboard/admin')}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  location.pathname === '/dashboard/admin'
+                    ? 'bg-sidebar-accent text-sidebar-primary'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                )}
+              >
+                <Shield className="w-5 h-5" />
+                Admin Panel
+              </button>
+            </>
           )}
         </nav>
 
