@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Wrench, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Auth = () => {
@@ -74,9 +74,7 @@ const Auth = () => {
       >
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl gradient-accent flex items-center justify-center">
-              <Wrench className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src="/jsu-icon.svg" alt="JSU" className="w-12 h-12 rounded-xl" />
             <h1 className="text-3xl font-bold font-heading text-primary-foreground">FixIt Sonny</h1>
           </div>
           <p className="text-primary-foreground/60">Smart maintenance management</p>

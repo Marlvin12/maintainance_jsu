@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="12" fill="#00205B"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+    font-family="Georgia, serif" font-size="22" font-weight="bold"
+    fill="#FFFFFF" letter-spacing="1">JSU</text>
+  <rect x="8" y="46" width="48" height="3" rx="1.5" fill="#F5A800"/>
+</svg>

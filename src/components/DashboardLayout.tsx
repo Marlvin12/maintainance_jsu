@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, PlusCircle, List, MessageCircle, LogOut,
-  Wrench, Shield, Settings, HardHat,
+  Shield, Settings, HardHat,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,8 +38,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
       <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col fixed h-full z-20">
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg gradient-accent flex items-center justify-center">
-              <Wrench className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+              <img src="/jsu-icon.svg" alt="JSU" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="font-heading font-bold text-lg text-sidebar-accent-foreground">FixIt Sonny</h1>
